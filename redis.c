@@ -1,6 +1,22 @@
 #include "redis.h"
 
 bool scontinuation;
+bool ccontinuation;
+
+void zero(int8 *buf, int16 size)
+{
+    int8 *p;
+    int16 n;
+
+    for (n = 0, p = buf; n < size; n++, p++)
+        *p = 0;
+
+    return;
+}
+
+void childloop(Client *cli)
+{
+}
 
 void mainloop(int s)
 {
@@ -9,6 +25,8 @@ void mainloop(int s)
     int s2;
     char *ip;
     int16 port;
+    Client *client;
+    pid_t pid;
 
     s2 = accept(s, (struct sockaddr *)&cli, (unsigned int *)&len);
     if (s2 < 0)
@@ -20,6 +38,36 @@ void mainloop(int s)
     ip = inet_ntoa(cli.sin_addr);
 
     printf("Connection from %s:%d\n", ip, port);
+
+    client = (Client *)malloc(sizeof(struct s_client));
+    assert(client);
+
+    zero((int8 *)client, sizeof(struct s_client));
+    client->s = s;
+    client->port = port;
+    strncpy(client->ip, ip, 15);
+
+    pid = fork();
+    if (pid)
+    {
+        free(client);
+
+        return;
+    }
+    else
+    {
+        dprintf(s2, "100 Connected to redis server\n");
+        ccontinuation = true;
+        while (ccontinuation)
+            childloop(client);
+
+        close(s2);
+        free(client);
+
+        return;
+    }
+
+    return;
 }
 
 int initserver(int16 port)

@@ -33,6 +33,8 @@ struct s_client
 
 typedef struct s_client Client;
 
+void zero(int8 *, int16);
+void childloop(Client *);
 void mainloop(int);
 int initserver(int16);
 int main(int, char **);
