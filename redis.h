@@ -8,9 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
 #include <assert.h>
-#include <error.h>
+#include <errno.h>
+#include <stddef.h>
+#include <stdarg.h>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -23,7 +24,17 @@ typedef unsigned int int32;
 typedef unsigned short int16;
 typedef unsigned char int8;
 
-void mainloop(int16);
+struct s_client
+{
+    int s;
+    char ip[16];
+    int16 port;
+};
+
+typedef struct s_client Client;
+
+void mainloop(int);
+int initserver(int16);
 int main(int, char **);
 
 #endif

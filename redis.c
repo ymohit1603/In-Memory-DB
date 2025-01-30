@@ -2,7 +2,27 @@
 
 bool scontinuation;
 
-void mainloop(int16 port)
+void mainloop(int s)
+{
+    struct sockaddr_in cli;
+    int32 len;
+    int s2;
+    char *ip;
+    int16 port;
+
+    s2 = accept(s, (struct sockaddr *)&cli, (unsigned int *)&len);
+    if (s2 < 0)
+    {
+        return;
+    }
+
+    port = (int16)htons((int)cli.sin_port);
+    ip = inet_ntoa(cli.sin_addr);
+
+    printf("Connection from %s:%d\n", ip, port);
+}
+
+int initserver(int16 port)
 {
     struct sockaddr_in sock;
     int s;
@@ -25,12 +45,17 @@ void mainloop(int16 port)
     {
         assert_perror(errno);
     }
+
+    printf("Server listening on %s:%d\n", HOST, port);
+    fflush(stdout);
+    return s;
 }
 
 int main(int argc, char *argv[])
 {
     char *sport;
     int16 port;
+    int s;
 
     if (argc < 2)
     {
@@ -43,9 +68,15 @@ int main(int argc, char *argv[])
 
     port = (int16)atoi(sport);
 
+    s = initserver(port);
+
+    scontinuation = true;
     while (scontinuation)
     {
-        mainloop(port);
+        mainloop(s);
     }
+
+    printf("shutting down ...\n");
+    close(s);
     return 0;
 }
