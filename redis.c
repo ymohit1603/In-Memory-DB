@@ -16,6 +16,69 @@ void zero(int8 *buf, int16 size)
 
 void childloop(Client *cli)
 {
+    int8 buf[256];
+    int16 n;
+    int8 *p, *f;
+    int8 cmd[256], folder[256], args[256];
+
+    zero(buf, 256);
+    read(cli->s, (char *)buf, 255);
+    n = (int16)strlen((char *)buf);
+    if (n > 254)
+    {
+        n = 254;
+    }
+
+    for (p = buf; (*p) && (n--) && (*p != ' ') && (*p != '\n') && (*p != '\r'); p++)
+        ;
+
+    zero(cmd, 256);
+    zero(folder, 256);
+    zero(args, 256);
+
+    // for command
+    if (!(*p) || (!n))
+    {
+        strncpy((char *)cmd, (char *)buf, 255);
+        goto done;
+    }
+    else if ((*p == ' ') || (*p == '\n') || (*p == '\r'))
+    {
+        *p = 0;
+        snprintf((char *)cmd, 256, "%s", (char *)buf);
+    }
+
+    for (p++, f = p; (*p) && (n--) && (*p != ' ') && (*p != '\n') && (*p != '\r'); p++)
+        ;
+
+    // for folder name
+    if (!(*p) || (!n))
+    {
+        strncpy((char *)folder, (char *)f, 255);
+        goto done;
+    }
+    else if ((*p == ' ') || (*p == '\n') || (*p == '\r'))
+    {
+        *p = 0;
+        strncpy((char *)folder, (char *)f, 255);
+    }
+
+    p++;
+
+    if (*p)
+    {
+        strncpy((char *)args, (char *)p, 255);
+        for (p = args; (*p) && (*p != '\n' && (*p != '\r')); p++)
+            ;
+
+        *p = 0;
+    }
+
+done:
+    dprintf(cli->s, "cmd:\t%s\n", cmd);
+    dprintf(cli->s, "folder:\t%s\n", folder);
+    dprintf(cli->s, "args:\t%s\n", args);
+    return;
 }
 
 void mainloop(int s)
@@ -43,7 +106,7 @@ void mainloop(int s)
     assert(client);
 
     zero((int8 *)client, sizeof(struct s_client));
-    client->s = s;
+    client->s = s2;
     client->port = port;
     strncpy(client->ip, ip, 15);
 
