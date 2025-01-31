@@ -33,6 +33,16 @@ struct s_client
 
 typedef struct s_client Client;
 
+typedef int32 (*Callback)(Client *, int8 *, int8 *);
+
+struct s_cmdhandler
+{
+    int8 *cmd;
+    Callback handler
+};
+
+typedef struct s_cmdhandler CmdHandler;
+
 void zero(int8 *, int16);
 void childloop(Client *);
 void mainloop(int);

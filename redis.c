@@ -1,7 +1,43 @@
 #include "redis.h"
 
+int32 handle_hello(Client *, int8 *, int8 *);
+
 bool scontinuation;
 bool ccontinuation;
+
+CmdHandler handlers[] = {
+    {(int8 *)"hello", handle_hello}};
+
+Callback getcmd(int8 *cmd)
+{
+    Callback *cb;
+    int16 n, arrlen;
+
+    if (sizeof(handlers) < 16)
+    {
+        return 0;
+    }
+
+    arrlen = (sizeof(handlers)) / 16;
+
+    cb = 0;
+    for (n = 0; n < arrlen; n++)
+    {
+        if (!strcmp((char *)cmd, (char *)handlers[n].cmd))
+        {
+            cb = handlers[n].handler;
+        }
+    }
+
+    return cb;
+}
+
+int32 handle_hello(Client *cli, int8 *folder, int8 *args)
+{
+    dprintf(cli->s, "hello '%s'\n", folder);
+
+    return 0;
+}
 
 void zero(int8 *buf, int16 size)
 {
@@ -42,7 +78,14 @@ void childloop(Client *cli)
         strncpy((char *)cmd, (char *)buf, 255);
         goto done;
     }
-    else if ((*p == ' ') || (*p == '\n') || (*p == '\r'))
+    else if ((*p == '\n') || (*p == '\r'))
+    {
+        *p = 0;
+        snprintf((char *)cmd, 256, "%s", (char *)buf);
+        goto done;
+    }
+    else if (
+        (*p == ' '))
     {
         *p = 0;
         snprintf((char *)cmd, 256, "%s", (char *)buf);
@@ -167,6 +210,11 @@ int main(int argc, char *argv[])
     char *sport;
     int16 port;
     int s;
+
+    Callback x;
+
+    x = getcmd((int8 *)"hello");
+    printf("%p\n", x);
 
     if (argc < 2)
     {

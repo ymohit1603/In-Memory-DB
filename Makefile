@@ -15,4 +15,4 @@ redis.o: redis.c
 	cc ${flags} -c $^
 
 clean:
-	rm -f *.o redis
+	rm -f *.o redis tree
