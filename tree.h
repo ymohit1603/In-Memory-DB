@@ -1,121 +1,58 @@
-#include "tree.h"
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 
-Tree root = {.n = {
-                 .tag = (TagRoot | TagNode),
-                 .north = (Node *)&root,
-                 .west = 0,
-                 .east = 0,
-                 .path = "/"}};
+#include <assert.h>
+#include <errno.h>
 
-void zero(int8 *str, int16 size)
+typedef void *Nullptr;
+Nullptr null_ptr = 0;
+
+#define TagRoot 1
+#define TagNode 2
+#define TagLeaf 4
+
+#define NoError 0
+
+#define find_last(x) find_last_linear(x)
+#define reterr(x) \
+    errno = (x);  \
+    return null_ptr
+
+typedef unsigned int int32;
+typedef unsigned short int int16;
+typedef unsigned char int8;
+typedef unsigned char Tag;
+
+struct s_node
 {
-    int8 *p;
-    int16 n;
+    Tag tag;
+    struct s_node *north;
+    struct s_node *west;
+    struct s_leaf *east;
+    int8 path[256];
+};
 
-    for (n = 0, p = str; n < size; p++, n++)
-    {
-        *p = 0;
-    }
+typedef struct s_node Node;
 
-    return;
-}
-
-Node *create_node(Node *parent, int8 *path)
+struct s_leaf
 {
-    Node *n;
+    Tag tag;
+    union u_tree *west;
+    struct s_leaf *east;
+    int8 key[128];
+    int8 *value;
     int16 size;
+};
 
-    errno = NoError;
-    assert(parent);
-    size = sizeof(struct s_node);
-    n = (Node *)malloc((int)size);
-    zero((int8 *)n, size);
+typedef struct s_leaf Leaf;
 
-    parent->west = n;
-    n->tag = TagNode;
-    n->north = parent;
-    strncpy((char *)n->path, (char *)path, 255);
-
-    return n;
-}
-
-Leaf *find_last_linear(Node *parent)
+union u_tree
 {
-    Leaf *l;
+    Node n;
+    Leaf l;
+};
 
-    errno = NoError;
-    assert(parent);
-
-    if (!parent->east)
-    {
-        reterr(NoError);
-    }
-    for (l = parent->east; l->east; l = l->east)
-        ;
-    assert(l);
-    return l;
-}
-
-Leaf *create_leaf(Node *parent, int8 *key, int8 *value, int16 count)
-{
-    Leaf *l, *new;
-    int16 size;
-
-    assert(parent);
-    l = find_last(parent);
-
-    size = sizeof(struct s_leaf);
-    new = (Leaf *)malloc(size);
-    assert(new);
-
-    if (!l)
-    {
-        // we are directly connected to the parent
-        parent->east = new;
-    }
-    else
-    {
-        // we are at the last leaf
-        l->east = new;
-    }
-
-    zero((int8 *)new, size);
-    new->tag = TagLeaf;
-    new->west = (!l) ? (Tree *)parent : (Tree *)l;
-
-    strncpy((char *)new->key, (char *)key, 127);
-    new->value = (int8 *)malloc(count);
-    zero(new->value, count);
-    assert(new->value);
-    strncpy((char *)new->value, (char *)value, count);
-    new->size = count;
-
-    return new;
-}
-
-int main()
-{
-    Node *n, *n2;
-    Leaf *l1, *l2;
-    int8 *key, *value;
-    int16 size;
-
-    n = create_node((Node *)&root, (int8 *)"/Users");
-    assert(n);
-    n2 = create_node(n, (int8 *)"/Users/login");
-    assert(n2);
-
-    key = (int8 *)"mohit";
-    value = (int8 *)"abc77301aa";
-    size = (int16)strlen((char *)value);
-    l1 = create_leaf(n2, key, value, size);
-    assert(l1);
-
-    key = (int8 *)"yadav";
-    value = (int8 *)"bbc773024a";
-    size = (int16)strlen((char *)value);
-    l2 = create_leaf(n2, key, value, size);
-    assert(l2);
-
-    return 0;
-}
+typedef union u_tree Tree;
