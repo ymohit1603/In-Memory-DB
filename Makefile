@@ -1,4 +1,4 @@
-flags=-02 -Wall -std=c2x
+flags=-O2 -Wall -std=c2x
 
 all: clean tree redis
 
