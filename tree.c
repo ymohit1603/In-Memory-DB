@@ -7,6 +7,56 @@ Tree root = {.n = {
                  .east = 0,
                  .path = "/"}};
 
+void print_tree(int fd, Tree *_root)
+{
+    int8 indentation;
+    int8 buf[256];
+    int16 size;
+    Node *n;
+    Leaf *l, *last;
+
+    indentation = 0;
+    for (n = (Node *)_root; n; n = n->west)
+    {
+        Print(indent(indentation++));
+        Print(n->path);
+        Print("\n");
+        if (n->east)
+        {
+            last = find_last(n);
+            if (last)
+                for (l = last; (Node *)l->west != n; l = (Leaf *)l->west)
+                {
+                    Print(indent(indentation));
+                    Print(n->path);
+                    Print("/");
+                    Print(l->key);
+                    Print(" -> '");
+                    write(fd, (char *)l->value, (int)l->size);
+                    Print("'\n");
+                }
+        }
+    }
+    return;
+}
+
+int8 *indent(int16 n)
+{
+    int16 i;
+    static int8 buf[256];
+    int8 *p;
+
+    if (n < 1)
+        return (int8 *)"";
+    assert((n < 120));
+    zero(buf, 256);
+
+    for (i = 0, p = buf; i < n; i++, p += 2)
+        strncpy((char *)p, "  ", 2);
+
+    return buf;
+}
+
 void zero(int8 *str, int16 size)
 {
     int8 *p;
@@ -39,6 +89,14 @@ Node *create_node(Node *parent, int8 *path)
     return n;
 }
 
+Node *find_name_linear(int8 *path)
+{
+}
+
+Leaf *lookup_linear(int8 *path, int8 *key)
+{
+}
+
 Leaf *find_last_linear(Node *parent)
 {
     Leaf *l;
@@ -48,7 +106,7 @@ Leaf *find_last_linear(Node *parent)
 
     if (!parent->east)
     {
-        reterr(NoError);
+        return (Leaf *)0;
     }
     for (l = parent->east; l->east; l = l->east)
         ;
@@ -116,6 +174,11 @@ int main()
     size = (int16)strlen((char *)value);
     l2 = create_leaf(n2, key, value, size);
     assert(l2);
+
+    print_tree(1, &root);
+
+    free(n2);
+    free(n);
 
     return 0;
 }

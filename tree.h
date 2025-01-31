@@ -17,9 +17,18 @@ Nullptr null_ptr = 0;
 #define NoError 0
 
 #define find_last(x) find_last_linear(x)
+#define lookup(x, y) lookup_linear(x, y)
+#define find_node(x) find_node_linear(x)
 #define reterr(x) \
     errno = (x);  \
     return null_ptr
+
+#define Print(x)                            \
+    zero(buf, 256);                         \
+    strncpy((char *)buf, (char *)(x), 255); \
+    size = (int16)strlen((char *)buf);      \
+    if (size)                               \
+        write(fd, (char *)buf, size);
 
 typedef unsigned int int32;
 typedef unsigned short int int16;
@@ -56,3 +65,14 @@ union u_tree
 };
 
 typedef union u_tree Tree;
+
+int8 *indent(int16);
+void print_tree(int, Tree *);
+void zero(int8 *, int16);
+Node *create_node(Node *, int8 *);
+Node *find_node_linear(int8 *);
+Leaf *lookup_linear(int8 *, int8 *);
+Leaf *find_last_linear(Node *);
+Leaf *create_leaf(Node *, int8 *, int8 *, int16);
+
+int main(void);
