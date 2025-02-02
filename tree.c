@@ -91,10 +91,49 @@ Node *create_node(Node *parent, int8 *path)
 
 Node *find_name_linear(int8 *path)
 {
+    Node *p, *ret;
+
+    for (ret = (Node *)0, p = (Node *)&root; p; p = p->west)
+    {
+        if (!strcmp((char *)p->path, (char *)path))
+        {
+            ret = p;
+            break;
+        }
+    }
+    return ret;
 }
 
-Leaf *lookup_linear(int8 *path, int8 *key)
+Leaf *find_leaf_linear(int8 *path, int8 *key)
 {
+    Node *n;
+    Leaf *l, *ret;
+
+    n = find_node(path);
+    if (!n)
+        return (Leaf *)0;
+
+    for (ret = (Leaf *)0, l = n->east; l; l = l->east)
+    {
+        if (!strcmp((char *)l->key, (char *)key))
+        {
+            ret = l;
+            break;
+        }
+    }
+    return ret;
+}
+
+int8 *lookup_linear(int8 *path, int8 *key)
+{
+    Leaf *p;
+
+    p = find_leaf_linear(path, key);
+    if (p)
+    {
+        return p->value;
+    }
+    return (int8 *)0;
 }
 
 Leaf *find_last_linear(Node *parent)
@@ -151,34 +190,114 @@ Leaf *create_leaf(Node *parent, int8 *key, int8 *value, int16 count)
     return new;
 }
 
+int8 *example_path(int8 *path)
+{
+    int32 x;
+    static int8 buf[256];
+    int8 c;
+    zero(buf, 256);
+    for (c = 'a'; c <= path; c++)
+    {
+        x = (int32)strlen((char *)buf);
+        *(buf + x++) = '/';
+        *(buf + x++) = c;
+    }
+
+    return buf;
+}
+
+int8 *example_duplicate(int8 *str)
+{
+    int16 n, x;
+    static int8 buf[256];
+
+    zero(buf, 256);
+    strncpy((char *)buf, (char *)str, 255);
+    n = (int16)strnlen((char *)buf);
+    x = (n * 2);
+    if (x > 254)
+    {
+        return buf;
+    }
+    else
+    {
+        strncpy((char *)buf + n, strdup((char *)buf), 255);
+    }
+    return buf;
+}
+
+int32 example_leaves()
+{
+
+    FILE *fd
+        int32 x,
+        y;
+    int8 *path, *val;
+    int8 buf[256];
+    Node *n;
+
+    fd = fopen(ExampleFile, "r");
+    assert(fd);
+
+    zero(buf, 256);
+    y = 0;
+    while (fgets((char *)buf, 255, fd))
+    {
+        x = (int32)strlen((char *)buf);
+        *(buf + x - 1) = 0;
+        path = example_path(*buf);
+        n = find_node(path);
+        if (!n)
+        {
+            zero(buf, 256);
+            continue;
+        }
+
+        val = example_duplicate(buf);
+        create_leaf(n, buf, val, (int16)strlen((char *)val));
+        y++;
+        zero(buf, 256);
+    }
+
+    fclose(fd);
+
+    return y;
+}
+
+Tree *example_tree()
+{
+    int8 c;
+    Node *n, *p;
+    int8 path[256];
+    int32 x;
+
+    zero(path, 256);
+    x = 0;
+    for (n = (Node *)&root, c = 'a'; c <= 'z'; c++)
+    {
+        x = (int32)strlen((char *)path);
+        *(path + x++) = '/';
+        *(path + x) = c;
+        printf("%s\n", path);
+
+        p = n;
+        n = create_node(p, path);
+    }
+
+    return (Tree *)&root;
+}
+
 int main()
 {
-    Node *n, *n2;
-    Leaf *l1, *l2;
-    int8 *key, *value;
-    int16 size;
+    Tree *example;
+    int32 x;
 
-    n = create_node((Node *)&root, (int8 *)"/Users");
-    assert(n);
-    n2 = create_node(n, (int8 *)"/Users/login");
-    assert(n2);
+    example = example_tree();
 
-    key = (int8 *)"mohit";
-    value = (int8 *)"abc77301aa";
-    size = (int16)strlen((char *)value);
-    l1 = create_leaf(n2, key, value, size);
-    assert(l1);
+    x = example_leaves();
+    (void)x;
 
-    key = (int8 *)"yadav";
-    value = (int8 *)"bbc773024a";
-    size = (int16)strlen((char *)value);
-    l2 = create_leaf(n2, key, value, size);
-    assert(l2);
-
-    print_tree(1, &root);
-
-    free(n2);
-    free(n);
+    print_tree(1, example);
 
     return 0;
 }

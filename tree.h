@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 
 typedef void *Nullptr;
 Nullptr null_ptr = 0;
@@ -15,8 +16,10 @@ Nullptr null_ptr = 0;
 #define TagLeaf 4
 
 #define NoError 0
+#define ExampleFile "./wl.txt"
 
 #define find_last(x) find_last_linear(x)
+#define find_leaf(x, y) find_leaf_linear(x, y)
 #define lookup(x, y) lookup_linear(x, y)
 #define find_node(x) find_node_linear(x)
 #define reterr(x) \
@@ -71,8 +74,13 @@ void print_tree(int, Tree *);
 void zero(int8 *, int16);
 Node *create_node(Node *, int8 *);
 Node *find_node_linear(int8 *);
-Leaf *lookup_linear(int8 *, int8 *);
+Leaf *find_leaf_linear(int8 *, int8 *);
+int8 *lookup_linear(int8 *, int8 *);
 Leaf *find_last_linear(Node *);
 Leaf *create_leaf(Node *, int8 *, int8 *, int16);
+int8 *example_path(int8 *);
+int32 example_leaves(void);
+Tree *example_tree(void);
+int8 *example_duplicate(int8 *);
 
 int main(void);
