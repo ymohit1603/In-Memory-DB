@@ -85,11 +85,12 @@ Node *create_node(Node *parent, int8 *path)
     n->tag = TagNode;
     n->north = parent;
     strncpy((char *)n->path, (char *)path, 255);
+    n->path[255] = '\0';
 
     return n;
 }
 
-Node *find_name_linear(int8 *path)
+Node *find_node_linear(int8 *path)
 {
     Node *p, *ret;
 
@@ -196,7 +197,7 @@ int8 *example_path(int8 *path)
     static int8 buf[256];
     int8 c;
     zero(buf, 256);
-    for (c = 'a'; c <= path; c++)
+    for (c = 'a'; c <= *path; c++)
     {
         x = (int32)strlen((char *)buf);
         *(buf + x++) = '/';
@@ -213,7 +214,7 @@ int8 *example_duplicate(int8 *str)
 
     zero(buf, 256);
     strncpy((char *)buf, (char *)str, 255);
-    n = (int16)strnlen((char *)buf);
+    n = (int16)strnlen((char *)buf, 255);
     x = (n * 2);
     if (x > 254)
     {
@@ -229,8 +230,8 @@ int8 *example_duplicate(int8 *str)
 int32 example_leaves()
 {
 
-    FILE *fd
-        int32 x,
+    FILE *fd;
+    int32 x,
         y;
     int8 *path, *val;
     int8 buf[256];
@@ -245,7 +246,7 @@ int32 example_leaves()
     {
         x = (int32)strlen((char *)buf);
         *(buf + x - 1) = 0;
-        path = example_path(*buf);
+        path = example_path(buf);
         n = find_node(path);
         if (!n)
         {
@@ -272,16 +273,29 @@ Tree *example_tree()
     int32 x;
 
     zero(path, 256);
-    x = 0;
-    for (n = (Node *)&root, c = 'a'; c <= 'z'; c++)
+
+    n = (Node *)&root; // Ensure root is initialized
+
+    for (c = 'a'; c <= 'z'; c++)
     {
         x = (int32)strlen((char *)path);
-        *(path + x++) = '/';
-        *(path + x) = c;
+
+        if (x + 2 >= 256) // Prevent buffer overflow
+            break;
+
+        snprintf((char *)path + x, 256 - x, "/%c", c);
         printf("%s\n", path);
 
         p = n;
         n = create_node(p, path);
+
+        if (!n) // Ensure node creation succeeded
+        {
+            fprintf(stderr, "Error: Failed to create node for %s\n", path);
+            return NULL;
+        }
+
+        p->west = n; // Properly link the new node
     }
 
     return (Tree *)&root;
@@ -297,7 +311,12 @@ int main()
     x = example_leaves();
     (void)x;
 
-    print_tree(1, example);
+    print_tree(1, (Tree *)&root);
 
+    int8 *value = lookup_linear("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z", "z-axis");
+    if (value)
+    {
+        printf("%s\n", value);
+    }
     return 0;
 }

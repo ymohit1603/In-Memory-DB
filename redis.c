@@ -10,7 +10,7 @@ CmdHandler handlers[] = {
 
 Callback getcmd(int8 *cmd)
 {
-    Callback *cb;
+    Callback cb;
     int16 n, arrlen;
 
     if (sizeof(handlers) < 16)
