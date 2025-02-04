@@ -16,7 +16,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <tree.h>
+#include "tree.h"
 
 #define HOST "127.0.0.1"
 #define PORT "12049"
@@ -39,7 +39,7 @@ typedef int32 (*Callback)(Client *, int8 *, int8 *);
 struct s_cmdhandler
 {
     int8 *cmd;
-    Callback handler
+    Callback handler;
 };
 
 typedef struct s_cmdhandler CmdHandler;

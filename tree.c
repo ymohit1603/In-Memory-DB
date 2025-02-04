@@ -1,5 +1,5 @@
 #include "tree.h"
-
+Nullptr null_ptr = 0;
 Tree root = {.n = {
                  .tag = (TagRoot | TagNode),
                  .north = (Node *)&root,
@@ -57,7 +57,7 @@ int8 *indent(int16 n)
     return buf;
 }
 
-void zero(int8 *str, int16 size)
+static void zero(int8 *str, int16 size)
 {
     int8 *p;
     int16 n;
@@ -72,29 +72,38 @@ void zero(int8 *str, int16 size)
 
 Node *create_node(Node *parent, int8 *path)
 {
-    Node *n;
-    int16 size;
+    if (!parent)
+    {
+        char parent_path[256];
+        strncpy((char *)parent_path, (char *)path, 255);
+        char *last_slash = strrchr(parent_path, '/');
+        if (last_slash)
+        {
+            *last_slash = '\0';
+            parent = find_node_linear((int8 *)parent_path);
+            if (!parent)
+            {
+                parent = create_node((Node *)&root, (int8 *)parent_path);
+            }
+        }
+    }
 
-    errno = NoError;
-    assert(parent);
-    size = sizeof(struct s_node);
-    n = (Node *)malloc((int)size);
-    zero((int8 *)n, size);
+    Node *n = (Node *)malloc(sizeof(Node));
+    zero((int8 *)n, sizeof(Node));
 
     parent->west = n;
     n->tag = TagNode;
     n->north = parent;
     strncpy((char *)n->path, (char *)path, 255);
-    n->path[255] = '\0';
 
     return n;
 }
 
 Node *find_node_linear(int8 *path)
 {
-    Node *p, *ret;
+    Node *p, *ret = NULL;
 
-    for (ret = (Node *)0, p = (Node *)&root; p; p = p->west)
+    for (p = (Node *)&root; p; p = p->west)
     {
         if (!strcmp((char *)p->path, (char *)path))
         {
@@ -108,7 +117,7 @@ Node *find_node_linear(int8 *path)
 Leaf *find_leaf_linear(int8 *path, int8 *key)
 {
     Node *n;
-    Leaf *l, *ret;
+    Leaf *l, *ret = NULL;
 
     n = find_node(path);
     if (!n)
@@ -128,10 +137,12 @@ Leaf *find_leaf_linear(int8 *path, int8 *key)
 int8 *lookup_linear(int8 *path, int8 *key)
 {
     Leaf *p;
+    printf("lOOKING Linear\n");
 
     p = find_leaf_linear(path, key);
     if (p)
     {
+        printf("FInd leaf linear:%p\n", p);
         return p->value;
     }
     return (int8 *)0;
@@ -320,3 +331,14 @@ Tree *example_tree()
 //     }
 //     return 0;
 // }
+
+// #ifndef TREE_MAIN
+// #define TREE_MAIN // Define TREE_MAIN only when tree.c runs separately
+
+// int main()
+// {
+//     printf("Tree system initialized.\n");
+//     return 0;
+// }
+
+// #endif

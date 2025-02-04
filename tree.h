@@ -7,13 +7,19 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-
-typedef void *Nullptr;
-Nullptr null_ptr = 0;
+#include "redis.h"
 
 #define TagRoot 1
 #define TagNode 2
 #define TagLeaf 4
+
+#ifndef TREE_H
+#define TREE_H
+
+typedef void *Nullptr;
+extern Nullptr null_ptr; // ✅ Only declared, not defined
+
+#endif
 
 #define NoError 0
 #define ExampleFile "./wl.txt"
@@ -71,7 +77,7 @@ typedef union u_tree Tree;
 
 int8 *indent(int16);
 void print_tree(int, Tree *);
-void zero(int8 *, int16);
+static void zero(int8 *, int16);
 Node *create_node(Node *, int8 *);
 Node *find_node_linear(int8 *);
 Leaf *find_leaf_linear(int8 *, int8 *);
@@ -82,5 +88,3 @@ int8 *example_path(int8 *);
 int32 example_leaves(void);
 Tree *example_tree(void);
 int8 *example_duplicate(int8 *);
-
-int main(void);

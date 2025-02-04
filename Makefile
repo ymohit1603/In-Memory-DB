@@ -1,18 +1,16 @@
 flags=-O2 -Wall -std=c2x
+ldflags=  # Define this if needed (e.g., `-lpthread` for threading support)
 
-all: clean tree redis
+all: clean redis
 
-tree:tree.o
-	cc ${flags} $^ -o $@ ${ldflags}
+tree.o: tree.c tree.h  # Recompile if tree.h changes
+	cc ${flags} -c tree.c -o tree.o
 
-tree.o: tree.c
-	cc ${flags} -c $^
+redis.o: redis.c redis.h tree.h  # Ensure tree.h is included if used
+	cc ${flags} -c redis.c -o redis.o
 
-redis:redis.o
-	cc ${flags} $^ -o $@ ${ldflags}
-
-redis.o: redis.c
-	cc ${flags} -c $^
+redis: redis.o tree.o  # Link redis with tree.o
+	cc ${flags} redis.o tree.o -o redis ${ldflags}
 
 clean:
-	rm -f *.o redis tree
+	rm -f *.o redis

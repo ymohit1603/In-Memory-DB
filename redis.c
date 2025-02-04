@@ -1,13 +1,15 @@
 #include "redis.h"
 extern Node root;
 
-int32 handle_hello(Client *, int8 *, int8 *);
+int32 handle_set(Client *, int8 *, int8 *);
+int32 handle_get(Client *, int8 *, int8 *);
 
 bool scontinuation;
 bool ccontinuation;
 
 CmdHandler handlers[] = {
-    {(int8 *)"hello", handle_hello}};
+    {(int8 *)"SET", handle_set},
+    {(int8 *)"GET", handle_get}};
 
 Callback getcmd(int8 *cmd)
 {
@@ -33,10 +35,79 @@ Callback getcmd(int8 *cmd)
     return cb;
 }
 
-int32 handle_hello(Client *cli, int8 *folder, int8 *args)
+int32 handle_set(Client *cli, int8 *full_path, int8 *value_str)
 {
-    dprintf(cli->s, "hello '%s'\n", folder);
+    int8 parent_path[256], key[128], value[128];
+    Node *parent_node;
+    Leaf *new;
 
+    // 1. Split full_path into parent path and key
+    strncpy((char *)parent_path, (char *)full_path, sizeof(parent_path) - 1);
+    parent_path[sizeof(parent_path) - 1] = '\0'; // Ensure null termination
+
+    // Find last '/' to separate parent path and key
+    char *last_slash = strrchr((char *)parent_path, '/');
+    if (!last_slash || last_slash == (char *)parent_path)
+    { // Handle root or invalid paths
+        dprintf(cli->s, "Error: Invalid path format\n");
+        return -1;
+    }
+
+    // Extract key (portion after last '/')
+    *last_slash = '\0'; // Terminate parent path at last slash
+    strncpy((char *)key, last_slash + 1, sizeof(key) - 1);
+    key[sizeof(key) - 1] = '\0';
+
+    // 2. Parse value (handle quotes)
+    strncpy((char *)value, (char *)value_str, sizeof(value) - 1);
+    value[sizeof(value) - 1] = '\0';
+
+    // Remove surrounding quotes if present
+    size_t val_len = strlen((char *)value);
+    if (val_len >= 2 && value[0] == '"' && value[val_len - 1] == '"')
+    {
+        memmove(value, value + 1, val_len - 2); // Remove quotes
+        value[val_len - 2] = '\0';
+    }
+
+    // 3. Find/Create parent node
+    parent_node = find_node_linear((int8 *)parent_path);
+    if (!parent_node)
+    {
+        parent_node = create_node(&root, (int8 *)parent_path);
+        if (!parent_node)
+        {
+            dprintf(cli->s, "Error: Failed to create parent directory\n");
+            return -1;
+        }
+    }
+
+    // 4. Create leaf (key-value pair)
+    new = create_leaf(parent_node, key, value, (int16)strlen((char *)value));
+    if (!new)
+    {
+        dprintf(cli->s, "Error: Failed to create key-value pair\n");
+        return -1;
+    }
+
+    dprintf(cli->s, "OK\n");
+    print_tree(cli->s, (Tree *)&root); // Show updated tree
+    return 0;
+}
+
+int32 handle_get(Client *cli, int8 *path, int8 *key)
+{
+    int8 *value = lookup_linear(path, key);
+    printf("Value: %s\n", value);
+    if (value)
+    {
+        dprintf(cli->s, "%s->", key);
+        dprintf(cli->s, "%s\n", value);
+    }
+    else
+    {
+        dprintf(cli->s, "Error: Key not found\n");
+    }
     return 0;
 }
 
@@ -223,31 +294,24 @@ int main(int argc, char *argv[])
     char *sport;
     int16 port;
     int s;
-    Node *n, *n2;
-    Leaf *l;
 
-    int8 *p;
-    int16 sz;
-    p = (int8 *)"true";
-    sz = (int16)strlen((char *)p);
+    // int8 *p;
+    // int16 sz;
+    // p = (int8 *)"true";
+    // sz = (int16)strlen((char *)p);
 
-    n = create_node(&root, (int8 *)"/Users/");
-    printf("n\t%p\n", n);
+    // n = create_node(&root, (int8 *)"/Users/");
+    // printf("n\t%p\n", n);
 
-    n2 = create_node(n, (int8 *)"/Users/job");
-    printf("n2\t%p\n", n2);
+    // n2 = create_node(n, (int8 *)"/Users/job");
+    // printf("n2\t%p\n", n2);
 
-    l = create_leaf(n, (int8 *)"loggedin", p, sz);
-    printf("l\t%p\n", l);
+    // l = create_leaf(n, (int8 *)"loggedin", p, sz);
+    // printf("l\t%p\n", l);
 
-    free(n2);
-    free(n);
-    exit(0);
-
-    // Callback x;
-
-    // x = getcmd((int8 *)"hello");
-    // printf("%p\n", x);
+    // free(n2);
+    // free(n);
+    // exit(0);
 
     if (argc < 2)
     {
