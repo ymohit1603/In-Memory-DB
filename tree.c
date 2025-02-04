@@ -301,22 +301,22 @@ Tree *example_tree()
     return (Tree *)&root;
 }
 
-int main()
-{
-    Tree *example;
-    int32 x;
+// int main()
+// {
+//     Tree *example;
+//     int32 x;
 
-    example = example_tree();
+//     example = example_tree();
 
-    x = example_leaves();
-    (void)x;
+//     x = example_leaves();
+//     (void)x;
 
-    print_tree(1, (Tree *)&root);
+//     print_tree(1, (Tree *)&root);
 
-    int8 *value = lookup_linear("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z", "z-axis");
-    if (value)
-    {
-        printf("%s\n", value);
-    }
-    return 0;
-}
+//     int8 *value = lookup_linear("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z", "z-axis");
+//     if (value)
+//     {
+//         printf("%s\n", value);
+//     }
+//     return 0;
+// }

@@ -1,4 +1,5 @@
 #include "redis.h"
+extern Node root;
 
 int32 handle_hello(Client *, int8 *, int8 *);
 
@@ -56,6 +57,7 @@ void childloop(Client *cli)
     int16 n;
     int8 *p, *f;
     int8 cmd[256], folder[256], args[256];
+    Callback cb;
 
     zero(buf, 256);
     read(cli->s, (char *)buf, 255);
@@ -116,11 +118,22 @@ void childloop(Client *cli)
 
         *p = 0;
     }
-
 done:
     dprintf(cli->s, "cmd:\t%s\n", cmd);
     dprintf(cli->s, "folder:\t%s\n", folder);
     dprintf(cli->s, "args:\t%s\n", args);
+    cb = getcmd(cmd);
+    if (!cb)
+    {
+        dprintf(cli->s, "!400 Command not found: %s\n", cmd);
+        return;
+    }
+    else
+    {
+        cb(cli, folder, args);
+        return;
+    }
+
     return;
 }
 
@@ -210,11 +223,31 @@ int main(int argc, char *argv[])
     char *sport;
     int16 port;
     int s;
+    Node *n, *n2;
+    Leaf *l;
 
-    Callback x;
+    int8 *p;
+    int16 sz;
+    p = (int8 *)"true";
+    sz = (int16)strlen((char *)p);
 
-    x = getcmd((int8 *)"hello");
-    printf("%p\n", x);
+    n = create_node(&root, (int8 *)"/Users/");
+    printf("n\t%p\n", n);
+
+    n2 = create_node(n, (int8 *)"/Users/job");
+    printf("n2\t%p\n", n2);
+
+    l = create_leaf(n, (int8 *)"loggedin", p, sz);
+    printf("l\t%p\n", l);
+
+    free(n2);
+    free(n);
+    exit(0);
+
+    // Callback x;
+
+    // x = getcmd((int8 *)"hello");
+    // printf("%p\n", x);
 
     if (argc < 2)
     {
